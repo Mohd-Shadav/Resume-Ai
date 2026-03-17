@@ -55,3 +55,7 @@ def login(user: UserLogin):
         raise HTTPException(status_code=401, detail="Invalid password")
 
     return {"message": "Login successful"}
+
+@app.get("/me")
+def get_me():
+    return {"email": "test@example.com"}
