@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { API } from '@/App';
+import { jobsAPI } from '@/lib/api';
 import { Briefcase, Plus, Users, LogOut, Loader2 } from 'lucide-react';
 
 const EmployerDashboard = ({ user, onLogout }) => {
@@ -30,10 +30,7 @@ const EmployerDashboard = ({ user, onLogout }) => {
 
   const fetchJobs = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/jobs/employer/my-jobs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await jobsAPI.myJobs();
 
       if (response.ok) {
         setJobs(await response.json());

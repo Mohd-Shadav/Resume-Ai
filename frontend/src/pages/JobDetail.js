@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { API } from '@/App';
+import { jobsAPI, applicationsAPI } from '@/lib/api';
 import { Briefcase, MapPin, Clock, DollarSign, CheckCircle, ArrowLeft, Loader2, LogOut } from 'lucide-react';
 
 const JobDetail = ({ user, onLogout }) => {
@@ -17,10 +17,7 @@ const JobDetail = ({ user, onLogout }) => {
 
   const fetchJobDetails = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/jobs/${jobId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await jobsAPI.get(jobId);
 
       if (response.ok) {
         setJob(await response.json());
@@ -37,10 +34,7 @@ const JobDetail = ({ user, onLogout }) => {
 
   const checkApplicationStatus = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/applications`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await applicationsAPI.list();
 
       if (response.ok) {
         const applications = await response.json();

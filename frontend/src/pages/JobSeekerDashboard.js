@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { API } from '@/App';
+import { jobsAPI, resumesAPI, applicationsAPI } from '@/lib/api';
 import { Briefcase, Upload, FileText, TrendingUp, LogOut, Loader2 } from 'lucide-react';
 
 const JobSeekerDashboard = ({ user, onLogout }) => {
@@ -19,13 +19,10 @@ const JobSeekerDashboard = ({ user, onLogout }) => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [resumesRes, jobsRes, appsRes] = await Promise.all([
-        fetch(`${API}/resumes`, { headers }),
-        fetch(`${API}/jobs`, { headers }),
-        fetch(`${API}/applications`, { headers })
+        resumesAPI.list(),
+        jobsAPI.list(),
+        applicationsAPI.list()
       ]);
 
       if (resumesRes.ok) setResumes(await resumesRes.json());
@@ -52,12 +49,7 @@ const JobSeekerDashboard = ({ user, onLogout }) => {
     formData.append('file', file);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/resumes/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      });
+      const response = await resumesAPI.create({ filename: file.name, content: 'parsed content' });
 
       if (response.ok) {
         toast.success('Resume uploaded successfully!');

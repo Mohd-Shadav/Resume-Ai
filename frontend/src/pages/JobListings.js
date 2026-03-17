@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
-import { API } from '@/App';
+import { jobsAPI } from '@/lib/api';
 import { Briefcase, LogOut, Loader2, Search } from 'lucide-react';
 
 const JobListings = ({ user, onLogout }) => {
@@ -19,7 +19,7 @@ const JobListings = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (searchQuery) {
-      const filtered = jobs.filter(job => 
+      const filtered = jobs.filter(job =>
         job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
         job.location.toLowerCase().includes(searchQuery.toLowerCase())
@@ -32,16 +32,9 @@ const JobListings = ({ user, onLogout }) => {
 
   const fetchJobs = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/jobs`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setJobs(data);
-        setFilteredJobs(data);
-      }
+      const data = await jobsAPI.list();
+      setJobs(data.data);
+      setFilteredJobs(data.data);
     } catch (error) {
       toast.error('Error loading jobs');
     } finally {

@@ -6,43 +6,34 @@ import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { API } from '@/App';
+import { authAPI } from '@/lib/api';
 import { Briefcase } from 'lucide-react';
 
 const AuthPage = ({ onLogin }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  
+
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [signupData, setSignupData] = useState({ 
-    email: '', 
-    password: '', 
-    name: '', 
-    role: 'job_seeker' 
+  const [signupData, setSignupData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    role: 'job_seeker'
   });
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      const response = await fetch(`${API}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        onLogin(data.token, data.user);
-        toast.success('Login successful!');
-        navigate(data.user.role === 'job_seeker' ? '/dashboard' : '/employer');
-      } else {
-        const error = await response.json();
-        toast.error(error.detail || 'Login failed');
-      }
+      const response = await authAPI.login(loginData);
+      const data = response.data;
+      localStorage.setItem('token', data.token);
+      onLogin(data.token, data.user);
+      toast.success('Login successful!');
+      navigate(data.user.role === 'job_seeker' ? '/dashboard' : '/employer');
     } catch (error) {
-      toast.error('Network error. Please try again.');
+      toast.error(error.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -51,25 +42,16 @@ const AuthPage = ({ onLogin }) => {
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
-      const response = await fetch(`${API}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(signupData)
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        onLogin(data.token, data.user);
-        toast.success('Account created successfully!');
-        navigate(data.user.role === 'job_seeker' ? '/dashboard' : '/employer');
-      } else {
-        const error = await response.json();
-        toast.error(error.detail || 'Signup failed');
-      }
+      const response = await authAPI.signup(signupData);
+      const data = response.data;
+      localStorage.setItem('token', data.token);
+      onLogin(data.token, data.user);
+      toast.success('Account created successfully!');
+      navigate(data.user.role === 'job_seeker' ? '/dashboard' : '/employer');
     } catch (error) {
-      toast.error('Network error. Please try again.');
+      toast.error(error.response?.data?.detail || 'Signup failed');
     } finally {
       setLoading(false);
     }
@@ -82,13 +64,13 @@ const AuthPage = ({ onLogin }) => {
           <Briefcase className="w-8 h-8 text-indigo-600" />
           <span className="text-3xl font-bold" style={{ fontFamily: 'Outfit' }}>ResuMatch</span>
         </div>
-        
+
         <Tabs defaultValue="login" className="w-full">
           <TabsList data-testid="auth-tabs" className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger data-testid="login-tab" value="login">Login</TabsTrigger>
             <TabsTrigger data-testid="signup-tab" value="signup">Sign Up</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="login">
             <form data-testid="login-form" onSubmit={handleLogin} className="space-y-4">
               <div>
@@ -117,9 +99,9 @@ const AuthPage = ({ onLogin }) => {
                   className="rounded-lg h-11"
                 />
               </div>
-              <Button 
+              <Button
                 data-testid="login-submit-btn"
-                type="submit" 
+                type="submit"
                 className="w-full rounded-full h-11 bg-indigo-600 hover:bg-indigo-700"
                 disabled={loading}
               >
@@ -127,7 +109,7 @@ const AuthPage = ({ onLogin }) => {
               </Button>
             </form>
           </TabsContent>
-          
+
           <TabsContent value="signup">
             <form data-testid="signup-form" onSubmit={handleSignup} className="space-y-4">
               <div>
@@ -182,9 +164,9 @@ const AuthPage = ({ onLogin }) => {
                   <option value="employer">Employer</option>
                 </select>
               </div>
-              <Button 
+              <Button
                 data-testid="signup-submit-btn"
-                type="submit" 
+                type="submit"
                 className="w-full rounded-full h-11 bg-indigo-600 hover:bg-indigo-700"
                 disabled={loading}
               >

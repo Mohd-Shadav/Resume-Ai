@@ -8,9 +8,7 @@ import EmployerDashboard from '@/pages/EmployerDashboard';
 import JobListings from '@/pages/JobListings';
 import JobDetail from '@/pages/JobDetail';
 import { Toaster } from '@/components/ui/sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-export const API = `${BACKEND_URL}/api`;
+import { authAPI } from '@/lib/api';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -27,17 +25,10 @@ function App() {
 
   const fetchUser = async (token) => {
     try {
-      const response = await fetch(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-      } else {
-        localStorage.removeItem('token');
-      }
+      const response = await authAPI.me();
+      const userData = response.data;
+      setUser(userData);
     } catch (error) {
-      console.error('Error fetching user:', error);
       localStorage.removeItem('token');
     } finally {
       setLoading(false);
