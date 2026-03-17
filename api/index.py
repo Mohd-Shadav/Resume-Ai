@@ -1,10 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
 
-# ✅ FIRST create app
 app = FastAPI()
 
-# ✅ THEN add middleware
+# ✅ CORS (important)
 origins = [
     "http://localhost:3000",
     "https://resume-ai-pe89.vercel.app"
@@ -18,7 +18,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 👇 your existing routes stay below
+# ✅ Fake DB (temporary storage)
+users_db = {}
+
+# ✅ Models
+class UserSignup(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+# ✅ Home route
 @app.get("/")
 def home():
     return {"message": "Resume AI backend running 🚀"}
+
+# ✅ Signup
+@app.post("/signup")
+def signup(user: UserSignup):
+    if user.email in users_db:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    users_db[user.email] = user.password
+    return {"message": "Signup successful"}
+
+# ✅ Login
+@app.post("/login")
+def login(user: UserLogin):
+    if user.email not in users_db:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if users_db[user.email] != user.password:
+        raise HTTPException(status_code=401, detail="Invalid password")
+
+    return {"message": "Login successful"}
