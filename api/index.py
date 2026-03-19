@@ -16,7 +16,9 @@ import api.database as db
 
 load_dotenv()
 
-# ✅ INIT APP FIRST (CRITICAL)
+# =========================
+# 🚀 INIT APP
+# =========================
 app = FastAPI(title="Resume AI Backend")
 
 # =========================
@@ -52,13 +54,18 @@ OS_VERSION = platform.release()
 OS_PLATFORM = platform.platform()
 
 # =========================
+# 🧠 IN-MEMORY USERS (FIX)
+# =========================
+users_db = {}
+
+# =========================
 # 🔑 UTILS
 # =========================
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    return pwd_context.hash(password)  # ✅ removed slicing
+    return pwd_context.hash(password)
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -71,14 +78,10 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("user_id")
 
-        if not user_id:
+        if not user_id or user_id not in users_db:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-        user = db.users.get(user_id)
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-
-        return user
+        return users_db[user_id]
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -112,30 +115,36 @@ class UserLogin(BaseModel):
 
 @app.post("/api/auth/signup")
 async def signup(user: models.UserCreate):
-    # check existing
-    for u in db.users.values():
-        if u["email"] == user.email:
-            raise HTTPException(status_code=400, detail="Email already registered")
+    try:
+        # check if exists
+        for u in users_db.values():
+            if u["email"] == user.email:
+                raise HTTPException(status_code=400, detail="Email already registered")
 
-    hashed_password = get_password_hash(user.password)
+        user_id = str(len(users_db) + 1)
 
-    user_dict = user.model_dump(exclude={"password"})
-    user_dict["password"] = hashed_password
+        user_dict = user.model_dump()
+        user_dict["id"] = user_id
+        user_dict["password"] = get_password_hash(user.password)
 
-    user_id = db.db.create_user(user_dict)
+        users_db[user_id] = user_dict
 
-    token = create_access_token({"user_id": user_id})
+        token = create_access_token({"user_id": user_id})
 
-    return {
-        "token": token,
-        "user": models.UserOut(**db.users[user_id])
-    }
+        return {
+            "token": token,
+            "user": models.UserOut(**user_dict)
+        }
+
+    except Exception as e:
+        print("SIGNUP ERROR:", e)
+        raise HTTPException(status_code=500, detail="Signup failed")
 
 @app.post("/api/auth/login")
 async def login(login_data: UserLogin):
     user = None
 
-    for u in db.users.values():
+    for u in users_db.values():
         if u["email"] == login_data.email and verify_password(login_data.password, u["password"]):
             user = u
             break
