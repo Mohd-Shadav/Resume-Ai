@@ -26,6 +26,7 @@ const AuthPage = ({ onLogin }) => {
     setLoading(true);
 
     try {
+     
       const response = await authAPI.login(loginData);
       const data = response.data;
       localStorage.setItem('token', data.token);
@@ -44,6 +45,7 @@ const AuthPage = ({ onLogin }) => {
     setLoading(true);
 
     try {
+       console.log(signupData)
       const response = await authAPI.signup(signupData);
       const data = response.data;
       localStorage.setItem('token', data.token);

@@ -25,9 +25,9 @@ const JobSeekerDashboard = ({ user, onLogout }) => {
         applicationsAPI.list()
       ]);
 
-      if (resumesRes.ok) setResumes(await resumesRes.json());
-      if (jobsRes.ok) setMatchedJobs(await jobsRes.json());
-      if (appsRes.ok) setApplications(await appsRes.json());
+      setResumes(resumesRes.data);
+setMatchedJobs(jobsRes.data);
+setApplications(appsRes.data);
     } catch (error) {
       toast.error('Error loading data');
     } finally {
@@ -48,19 +48,24 @@ const JobSeekerDashboard = ({ user, onLogout }) => {
     const formData = new FormData();
     formData.append('file', file);
 
-    try {
-      const response = await resumesAPI.create({ filename: file.name, content: 'parsed content' });
+   try {
+  await resumesAPI.create({
+    filename: file.name,
+    content: 'parsed content'
+  });
 
-      if (response.ok) {
-        toast.success('Resume uploaded successfully!');
-        fetchData();
-      } else {
-        const error = await response.json();
-        toast.error(error.detail || 'Upload failed');
-      }
-    } catch (error) {
-      toast.error('Network error. Please try again.');
-    } finally {
+  toast.success('Resume uploaded successfully!');
+  fetchData();
+
+} catch (error) {
+  console.error(error);
+
+  if (error.response) {
+    toast.error(error.response.data.detail || 'Upload failed');
+  } else {
+    toast.error('Network error. Please try again.');
+  }
+} finally {
       setUploading(false);
     }
   };
